@@ -1,0 +1,338 @@
+},
+      "id": "node-parse-ia-secure-007",
+      "name": "🧩 Parsear Respuesta IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-aprobado",
+              "leftValue": "={{ $json.ia_decision }}",
+              "rightValue": "APROBADO",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-approved-secure-008",
+      "name": "🔀 ¿Aprobado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "TU_GOOGLE_SHEET_ID_SOLICITUDES",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "solicitudes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha_desde": "={{ $json.fechas_solicitadas[0] }}",
+            "fecha_hasta": "={{ $json.fechas_solicitadas[1] }}",
+            "legajo": "={{ $json.legajo }}",
+            "cantidad_dias": "={{ $json.dias_solicitados }}",
+            "estado": "={{ $json.ia_decision }}",
+            "fecha_envio": "={{ new Date($json.fecha_recibido).toLocaleDateString('es-AR') }}"
+          },
+          "matchingColumns": [
+            "legajo"
+          ],
+          "schema": [
+            { "id": "id_solicitud", "displayName": "id_solicitud", "type": "string", "canBeUsedToMatch": true },
+            { "id": "legajo", "displayName": "legajo", "type": "string", "canBeUsedToMatch": true },
+            { "id": "fecha_desde", "displayName": "fecha_desde", "type": "string" },
+            { "id": "fecha_hasta", "displayName": "fecha_hasta", "type": "string" },
+            { "id": "cantidad_dias", "displayName": "cantidad_dias", "type": "string" },
+            { "id": "estado", "displayName": "estado", "type": "string" },
+            { "id": "motivo", "displayName": "motivo", "type": "string" },
+            { "id": "fecha_envio", "displayName": "fecha_envio", "type": "string" }
+          ]
+        }
+      },
+      "id": "node-sheets-annotate-secure-009",
+      "name": "📝 Anotar Solicitud en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        448,
+        -192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REMPLAZAR_CON_ID_CREDENCIAL_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "TU_GOOGLE_SHEET_ID_NOMINA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "nomina",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "legajo": "={{ $json.legajo }}",
+            "nombre": "={{ $json.nombre_empleado }}",
+            "email": "={{ $json.email_empleado }}",
+            "dias_disponibles": "={{ Number($json.dias_disponibles) - Number($json.ia_dias_solicitados) }}",
+            "dias_tomandos": "={{ $json.dias_solicitados }}",
+            "fecha_vacacional": "={{ $json.fechas_solicitadas[0] }}-{{ $json.fechas_solicitadas[1] }}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            { "id": "legajo", "displayName": "legajo", "type": "string" },
+            { "id": "nombre", "displayName": "nombre", "type": "string" },
+            { "id": "email", "displayName": "email", "type": "string", "canBeUsedToMatch": true },
+            { "id": "dias_disponibles", "displayName": "dias_disponibles", "type": "string" },
+            { "id": "dias_tomandos", "displayName": "dias_tomandos", "type": "string" },
+            { "id": "fecha_vacacional", "displayName": "fecha_vacacional", "type": "string" }
+          ]
+        }
+      },
+      "id": "node-sheets-update-secure-010",
+      "name": "📊 Actualizar Saldo en Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        448,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REMPLAZAR_CON_ID_CREDENCIAL_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.remitente }}",
+        "subject": "=✅ Tu solicitud de vacaciones fue APROBADA",
+        "message": "=<html><body style=\"font-family:Arial,sans-serif;color:#333\">\n<h2 style=\"color:#1a7a4a\">✅ Solicitud de Vacaciones Aprobada</h2>\n<p>Hola <strong>{{ $json.nombre_empleado || $json.nombre }}</strong>,</p>\n<p>{{ $json.ia_mensaje_empleado }}</p>\n<table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%\">\n  <tr style=\"background:#e8f4fd\"><td><strong>Días solicitados</strong></td><td>{{ $json.ia_dias_solicitados }}</td></tr>\n  <tr><td><strong>Días restantes después</strong></td><td>{{ parseInt($json.dias_disponibles) - parseInt($json.ia_dias_solicitados) }}</td></tr>\n  <tr style=\"background:#e8f4fd\"><td><strong>Estado</strong></td><td style=\"color:#1a7a4a\"><strong>APROBADO</strong></td></tr>\n</table>\n<br/><p>Saludos,<br/><em>Sistema de RRHH</em></p>\n</body></html>",
+        "options": {}
+      },
+      "id": "node-gmail-approve-secure-011",
+      "name": "📤 Notificar Aprobación al Empleado",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REMPLAZAR_CON_ID_CREDENCIAL_GMAIL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.remitente }}",
+        "subject": "=❌ Tu solicitud de vacaciones — {{ $json.ia_decision }}",
+        "message": "=<html><body style=\"font-family:Arial,sans-serif;color:#333\">\n<h2 style=\"color:#c0392b\">{{ $json.ia_decision === 'RECHAZADO' ? '❌ Solicitud Rechazada' : '⚠️ Solicitud en Revisión' }}</h2>\n<p>Hola <strong>{{ $json.nombre_empleado || $json.nombre }}</strong>,</p>\n<p>{{ $json.ia_mensaje_empleado }}</p>\n<table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%\">\n  <tr style=\"background:#fdecea\"><td><strong>Días disponibles</strong></td><td>{{ $json.dias_disponibles }}</td></tr>\n  <tr><td><strong>Días solicitados</strong></td><td>{{ $json.ia_dias_solicitados }}</td></tr>\n  <tr style=\"background:#fdecea\"><td><strong>Estado</strong></td><td style=\"color:#c0392b\"><strong>{{ $json.ia_decision }}</strong></td></tr>\n</table>\n<br/><p>Para consultas, comunicate directamente con RRHH.<br/><em>Sistema de RRHH</em></p>\n</body></html>",
+        "options": {}
+      },
+      "id": "node-gmail-reject-secure-012",
+      "name": "📤 Notificar Rechazo al Empleado",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        448,
+        384
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REMPLAZAR_CON_ID_CREDENCIAL_GMAIL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "CORREO_RRHH_INTERNO@TUEMPRESA.COM",
+        "subject": "=🏖️ Solicitud de {{ $json.nombre_empleado || $json.nombre }} — {{ $json.ia_decision }}",
+        "message": "=<html><body style=\"font-family:Arial,sans-serif;color:#333\">\n<h2>🏖️ Solicitud de Vacaciones — {{ $json.ia_decision }}</h2>\n<table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%\">\n  <tr style=\"background:#e8f4fd\"><td><strong>Empleado</strong></td><td>{{ $json.nombre_empleado || $json.nombre }}</td></tr>\n  <tr><td><strong>Email</strong></td><td>{{ $json.remitente }}</td></tr>\n  <tr style=\"background:#e8f4fd\"><td><strong>Legajo</strong></td><td>{{ $json.legajo || 'No encontrado' }}</td></tr>\n  <tr><td><strong>Días disponibles</strong></td><td>{{ $json.dias_disponibles }}</td></tr>\n  <tr style=\"background:#e8f4fd\"><td><strong>Días solicitados</strong></td><td>{{ $json.ia_dias_solicitados }}</td></tr>\n  <tr><td><strong>Decisión IA</strong></td><td><strong>{{ $json.ia_decision }}</strong></td></tr>\n  <tr style=\"background:#e8f4fd\"><td><strong>Análisis IA</strong></td><td>{{ $json.ia_mensaje_rrhh }}</td></tr>\n  <tr><td><strong>Observaciones</strong></td><td>{{ $json.ia_observaciones }}</td></tr>\n</table>\n<br/><p>Registro guardado en Google Sheets.<br/><em>Sistema de RRHH</em></p>\n</body></html>",
+        "options": {}
+      },
+      "id": "node-gmail-hr-secure-013",
+      "name": "📨 Notificar a RRHH",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        448,
+        576
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REMPLAZAR_CON_ID_CREDENCIAL_GMAIL",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "📧 Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "🔍 Extraer Datos del Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Extraer Datos del Email": {
+      "main": [
+        [
+          {
+            "node": "✅ ¿Es solicitud de vacaciones?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ ¿Es solicitud de vacaciones?": {
+      "main": [
+        [
+          {
+            "node": "📊 Buscar Empleado en Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Buscar Empleado en Sheets": {
+      "main": [
+        [
+          {
+            "node": "🔗 Combinar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Combinar Datos": {
+      "main": [
+        [
+          {
+            "node": "🤖 OpenAI — Analizar Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 OpenAI — Analizar Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "🧩 Parsear Respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧩 Parsear Respuesta IA": {
+      "main": [
+        [
+          {
+            "node": "🔀 ¿Aprobado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 ¿Aprobado?": {
+      "main": [
+        [
+          {
+            "node": "📝 Anotar Solicitud en Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📊 Actualizar Saldo en Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📤 Notificar Aprobación al Empleado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📨 Notificar a RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📤 Notificar Rechazo al Empleado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📨 Notificar a RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  }
+}
