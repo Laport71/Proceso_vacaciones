@@ -28,7 +28,9 @@ El sistema recibe solicitudes de vacaciones por correo electrónico, las interpr
 
 ## 📁 Estructura del Repositorio
 
-```
+```link al repositorio:
+https://github.com/Laport71/Proceso_vacaciones
+
 Proceso_vacaciones/
 │
 ├── README.md
@@ -134,26 +136,26 @@ Las capturas del workflow, el diagrama BPMN y el funcionamiento en tiempo real s
 
 | Variable | Tipo | Descripción |
 |---|---|---|
-| `legajo` | Integer | Número identificador único del empleado |
-| `nombre` | String | Nombre completo del empleado |
-| `email` | String | Correo electrónico del empleado |
-| `dias_disponibles` | Integer | Saldo actual de días de vacaciones |
-| `dias_tomados` | Integer | Días de vacaciones ya utilizados |
-| `fecha_vacacional` | String | Rango de fechas del período vacacional (ej: 24/09/2026-30/09/2026) |
+| `legajo` | int | Número identificador único del empleado |
+| `nombre` | str | Nombre completo del empleado |
+| `email` | str | Correo electrónico del empleado |
+| `dias_disponibles` | int | Saldo actual de días de vacaciones |
+| `dias_tomados` | int | Días de vacaciones ya utilizados |
+| `fecha_vacacional` | str | Rango de fechas del período vacacional (ej: 24/09/2026-30/09/2026) |
 
 ### Hoja: `Solicitudes`
 
 | Variable | Tipo | Descripción |
 |---|---|---|
-| `id_solicitud` | Integer | Identificador único de la solicitud |
-| `legajo` | Integer | Legajo del empleado solicitante |
+| `id_solicitud` | int | Identificador único de la solicitud |
+| `legajo` | int | Legajo del empleado solicitante |
 | `fecha_desde` | Date | Fecha de inicio de las vacaciones solicitadas |
 | `fecha_hasta` | Date | Fecha de fin de las vacaciones solicitadas |
-| `cantidad_dias` | Integer | Total de días solicitados |
-| `estado` | String | Resultado de la solicitud (`APROBADO` / `RECHAZADO`) |
-| `motivo` | String | Motivo o detalle adicional de la solicitud |
+| `cantidad_dias` | int | Total de días solicitados |
+| `estado` | str | Resultado de la solicitud (`APROBADO` / `RECHAZADO`) |
+| `motivo` | str | Motivo o detalle adicional de la solicitud |
 | `fecha_envio` | Date | Fecha en que se realizó la solicitud |
 
 ## 👥 Autores
 
-Desarrollado como proyecto integrador para la materia **Organización Empresarial** — Tecnicatura Universitaria en Programación, UTN.
+Desarrollado como proyecto integrador para la materia **Organización Empresarial** — Tecnicatura Universitaria en Programación, UTN Por Laura Portela y Daniel Buscaglia
